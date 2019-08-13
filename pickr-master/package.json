@@ -42,5 +42,8 @@
     },
     "bugs": {
         "url": "https://github.com/Simonwep/pickr/issues"
+    },
+    "dependencies": {
+        "package": "^1.0.1"
     }
 }
