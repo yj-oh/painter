@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Canvas</title>
+	<link href="https://fonts.googleapis.com/css?family=Montserrat:300,400&display=swap" rel="stylesheet">
+	<link href="pickr-master/dist/themes/classic.min.css" rel="stylesheet"/>
+	<link href="icon/fontawesome-free-5.0.8/web-fonts-with-css/css/fontawesome-all.min.css" rel="stylesheet"/>
+	<style type="text/css">
+		body							{margin:0; padding:0; font-size:11px}
+
+		#painter						{position:fixed; width:850px; height:800px}
+		#canvas 						{float:left; border:solid 2px #cecece}
+
+		.toolkit						{float:left; width:50px; height:800px; background-color:gainsboro; border:solid 1px #000000; box-sizing:border-box}
+		.toolkit .header 				{height:30px; background-color:#505050}
+		.toolkit .header span 			{display:inline-block; width:100%; height:100%; color:#989898; line-height:30px; font-size:12px; text-align:center}
+		.toolkit .body 					{width:100%; height:calc(100% - 30px); background-color:#2f2f2f; text-align:center}
+		.toolkit .body button   		{width:40px; height:40px; background-color:#303030; border:none}
+		.toolkit .body button i 		{font-size:20px; color:#d0d0d0}
+
+		.sizeSelect						{display:none; position:absolute; right:0; padding:4px; height:50px; z-index:1; background-color:#929292; border-radius:5px}
+		.sizeSelect label 				{padding:0 3px}
+		.sizeSelect p					{display:inline-block; margin:0; padding-left:2px}
+		.sizeSelect .sizeText			{width:30px}
+		.sizeSelect .slider				{display:block; margin-top:12px; -webkit-appearance:none; width:100%; height:8px; background-color:#d3d3d3; border-radius:5px; outline:none}
+		.slider::-webkit-slider-thumb 	{-webkit-appearance:none; appearance:none; border-radius:50%; width:20px; height:20px; background-color:#303030; cursor:pointer}
+
+		.pencil, .pickr 				{margin-top:12px}
+		.pickr button 					{width:35px!important; height:35px!important; box-sizing:border-box; border:solid 2px #ffffff!important; border-radius:5px!important; outline:solid 1px #000000}
+	</style>
+</head>
+<body>
+	<div id="painter">
+		<canvas id="canvas" width="796" height="796"></canvas>
+		<div class="toolkit">
+			<div class="header">
+				<span>Painter</span>
+			</div>
+			<div class="body">
+				<button type="button" class="pencil" onclick="toolSetting(this.className, null, colorSetting())"><i class="fas fa-pencil-alt"></i></button>
+				<button type="button" class="brush"  onclick="toolSetting(this.className, null, colorSetting())"><i class="fas fa-paint-brush"></i></button>
+				<button type="button" class="eraser" onclick="toolSetting(this.className, null, '#ffffff')"><i class="fas fa-eraser"></i></button>
+				<!--<button type="button" class="figure" onclick="toolSetting(this.className, null, null)"><i class="far fa-clone"></i></button>-->
+				<button type="button" class="sizeBtn"><i class="fas fa-circle"></i></button>
+				<div class="sizeSelect">
+					<div>
+						<label>크기</label><input type="text" class="sizeText" maxlength="3" value="1"><p>px</p>
+					</div>
+					<input type="range" class="slider" min="1" max="100" value="1">
+				</div>
+				<div class="colorPicker"></div>
+				<!--<button type="button" class="clear"><i class="fas fa-broom"></i></button>-->
+			</div>
+		</div>
+	</div>
+	<script src="pickr-master/dist/pickr.min.js"></script>
+	<script>
+
+		/* *
+		* 	< HTML5 canvas tag 이용하여 그림판 구현 >
+		*   @author 	오윤주
+		* 	@version 	1.0
+		*/
+
+		/*
+		* fix
+		* 1. mouse 캔버스 벗어났을 때 mouseup이 안 걸림?
+		* 2. brush 1px 2줄로 보임
+		* 3. size버튼 & size div 이외의 영역 클릭시 display: none
+		* 4. 선택된 tool 표시
+		*/
+
+
+		/* color-picker */
+		const pickr = new Pickr({
+			theme			 : 'classic',
+			el				 : '.colorPicker',
+			default			 : 'rgba(0,0,0,1)',
+			outputPrecision	 : 0,
+			adjustableNumbers: true,
+			components		 : {
+				preview	     : true,  // Left side color comparison
+				opacity	 	 : true,  // Opacity slider
+				hue	 		 : true,  // Hue slider
+				interaction  : {
+					rgba	 : true,  // rgba option (red green blue and alpha)
+					input	 : true,  // input / output element
+					clear	 : true,  // Button which provides the ability to select no color,
+					save	 : true   // Save button
+				},
+			},
+			strings  : {
+				save : 'pick',  // Default for save button
+				clear: 'Clear'  // Default for clear button
+			}
+		});
+
+		const canvas     = document.getElementById("canvas");
+		const slider     = document.getElementsByClassName("slider"    )[0];
+		const sizeText   = document.getElementsByClassName("sizeText"  )[0];
+		const sizeBtn    = document.getElementsByClassName("sizeBtn"   )[0];
+		const sizeSelect = document.getElementsByClassName("sizeSelect")[0];
+		const pickrBtn   = document.getElementsByClassName("pcr-save"  )[0];
+
+		let context;
+		let drawing = false;
+
+		let tool = {
+			type  : 'pencil',
+			size  : 1,
+			color : 'rgba(0,0,0,1)'
+		};
+
+
+		window.onload = function() {
+			if(canvas.getContext)
+				context = canvas.getContext("2d");
+			else
+				alert("이 브라우저는 지원되지 않습니다.");
+
+			canvas.addEventListener("mousedown", eventControl);
+			canvas.addEventListener("mouseup"  , eventControl);
+			canvas.addEventListener("mousemove", eventControl);
+		};
+
+		/* === tool size 조절 === */
+		sizeBtn.onclick = function() {
+			if(sizeSelect.style.display === "block")
+				sizeSelect.style.display = "none";
+			else
+				sizeSelect.style.display = "block";
+		};
+
+		slider.oninput = function() {
+			sizeText.value = this.value;
+		};
+
+		sizeText.onkeydown = function(event) {
+			let key = event.keyCode;
+
+			if(key === 38) {  // 위방향키
+				sizeText.value = parseInt(sizeText.value) + 1;
+			} else if(key === 40) {  // 아래방향키
+				sizeText.value = parseInt(sizeText.value) - 1;
+			};
+
+			// 숫자키만 입력 && backspace, enter, F5, 좌우방향키는 허용
+			if((key < 48 || key > 57)
+				&& (key !== 8 && key !== 13 && key !== 116 && key !== 37 && key !== 39)) {
+				event.returnValue = false;
+			};
+		};
+
+		sizeText.onkeyup = function(event) {
+			if(sizeText.value > 100) {
+				sizeText.value = 100;
+			} else if(sizeText.value < 1) {
+				sizeText.value = 1;
+			};
+			slider.value = this.value;
+			toolSetting(null, this.value, null);
+		};
+
+		slider.addEventListener("change", function() {
+			toolSetting(null, slider.value, null);
+		});
+		/* === /tool size 조절 === */
+
+
+		pickrBtn.addEventListener("click", colorSetting);
+		function colorSetting() {
+			tool.color = pickr.getColor().toRGBA().toString();
+		};
+
+
+		function toolSetting(type, size, color) {
+			if(type ) tool.type  = type;
+			if(size ) tool.size  = size;
+			if(color) tool.color = color;
+			console.log("tool.type  : " + tool.type);
+			console.log("tool.size  : " + tool.size);
+			console.log("tool.color : " + tool.color);
+		};
+
+		function contextSetting() {
+			context.lineWidth   = tool.size;
+			context.lineCap     = "round";
+			context.shadowColor = 'rgba(0,0,0,1)';
+
+			if(tool.type === "brush") {
+				context.shadowBlur    = 1;
+				context.shadowOffsetX = 2;
+				context.shadowOffsetY = 2;
+				context.strokeStyle   = shadowEffect(tool.color);
+			} else {
+				context.shadowBlur    = 0;
+				context.shadowOffsetX = 0;
+				context.shadowOffsetY = 0;
+				context.strokeStyle   = tool.color;
+			}
+		};
+
+		// tool.color = rgba(r, g, b, a) 의 a 변경
+		function shadowEffect(rgb) {
+			let a   = ',0.01)';
+			let idx = rgb.lastIndexOf(',');
+
+			return rgb.substring(0, idx) + a;
+		};
+
+		// 마우스 동작에 대한 이벤트핸들러
+		function eventControl(event) {
+			switch (event.type) {
+				case "mousedown" :
+					startDrawing(event.pageX, event.pageY);
+					break;
+				case "mouseup" :
+					finishDrawing();
+					break;
+				case "mousemove" :
+					if(drawing) draw(event.pageX, event.pageY);
+					break;
+			};
+		};
+
+		function startDrawing(x, y) {
+			drawing = true;
+			contextSetting();
+			context.beginPath();   // path 그리기 시작
+			context.moveTo(x, y);  // 시작점 이동
+		};
+
+		function draw(x, y) {
+			context.lineTo(x, y);  // 시작점 ~ 현재 좌표까지 선
+			context.stroke();	   // 그리기
+		};
+
+		function finishDrawing() {
+			drawing = false;
+			context.closePath();  // path 그리기 종료
+		};
+
+	</script>
+</body>
+</html>
