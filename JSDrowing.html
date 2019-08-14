@@ -19,15 +19,19 @@
 		.toolkit .body button   		{width:40px; height:40px; background-color:#303030; border:none}
 		.toolkit .body button i 		{font-size:20px; color:#d0d0d0}
 
-		.sizeSelect						{display:none; position:absolute; right:0; padding:4px; height:50px; z-index:1; background-color:#929292; border-radius:5px}
-		.sizeSelect label 				{padding:0 3px}
-		.sizeSelect p					{display:inline-block; margin:0; padding-left:2px}
-		.sizeSelect .sizeText			{width:30px}
-		.sizeSelect .slider				{display:block; margin-top:12px; -webkit-appearance:none; width:100%; height:8px; background-color:#d3d3d3; border-radius:5px; outline:none}
+		<--!.sizeSelect						{display:none; position:absolute; right:0; padding:4px; height:50px; z-index:1; background-color:#929292; border-radius:5px}-->
+		.size-modal {display:none; top:0; left:0;width:100%; height:100%; position:fixed; z-index:1; background-color:rgba(0, 0, 0, 0.5)}
+		.size-modal-content						{right:0; padding:4px; height:50px; background-color:#929292; border-radius:5px}
+		
+		.size-modal-content label 				{padding:0 3px}
+		.size-modal-content p					{display:inline-block; margin:0; padding-left:2px}
+		.size-modal-content .sizeText			{width:30px}
+		.size-modal-content .slider				{display:block; margin-top:12px; -webkit-appearance:none; width:100%; height:8px; background-color:#d3d3d3; border-radius:5px; outline:none}
 		.slider::-webkit-slider-thumb 	{-webkit-appearance:none; appearance:none; border-radius:50%; width:20px; height:20px; background-color:#303030; cursor:pointer}
 
 		.pencil, .pickr 				{margin-top:12px}
 		.pickr button 					{width:35px!important; height:35px!important; box-sizing:border-box; border:solid 2px #ffffff!important; border-radius:5px!important; outline:solid 1px #000000}
+		
 	</style>
 </head>
 <body>
@@ -43,11 +47,13 @@
 				<button type="button" class="eraser" onclick="toolSetting(this.className, null, '#ffffff')"><i class="fas fa-eraser"></i></button>
 				<!--<button type="button" class="figure" onclick="toolSetting(this.className, null, null)"><i class="far fa-clone"></i></button>-->
 				<button type="button" class="sizeBtn"><i class="fas fa-circle"></i></button>
-				<div class="sizeSelect">
-					<div>
-						<label>크기</label><input type="text" class="sizeText" maxlength="3" value="1"><p>px</p>
+				<div class="size-modal">
+					<div class="size-modal-content">
+						<div>
+							<label>크기</label><input type="text" class="sizeText" maxlength="3" value="1"><p>px</p>
+						</div>
+						<input type="range" class="slider" min="1" max="100" value="1">
 					</div>
-					<input type="range" class="slider" min="1" max="100" value="1">
 				</div>
 				<div class="colorPicker"></div>
 				<!--<button type="button" class="clear"><i class="fas fa-broom"></i></button>-->
@@ -100,9 +106,11 @@
 		const slider     = document.getElementsByClassName("slider"    )[0];
 		const sizeText   = document.getElementsByClassName("sizeText"  )[0];
 		const sizeBtn    = document.getElementsByClassName("sizeBtn"   )[0];
-		const sizeSelect = document.getElementsByClassName("sizeSelect")[0];
+		//const sizeSelect = document.getElementsByClassName("sizeSelect")[0];
 		const pickrBtn   = document.getElementsByClassName("pcr-save"  )[0];
 
+		const modal = document.getElementsByClassName("size-modal")[0];
+		
 		let context;
 		let drawing = false;
 
@@ -126,10 +134,13 @@
 
 		/* === tool size 조절 === */
 		sizeBtn.onclick = function() {
-			if(sizeSelect.style.display === "block")
-				sizeSelect.style.display = "none";
-			else
-				sizeSelect.style.display = "block";
+		  modal.style.display = "block";
+		};
+
+		window.onclick = function(event) {
+			if (event.target == modal) {
+				modal.style.display = "none";
+			};
 		};
 
 		slider.oninput = function() {
@@ -240,7 +251,7 @@
 			drawing = false;
 			context.closePath();  // path 그리기 종료
 		};
-
+		
 	</script>
 </body>
 </html>
