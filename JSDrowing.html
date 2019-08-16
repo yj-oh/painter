@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="kr">
 <head>
 	<meta charset="UTF-8">
 	<title>Canvas</title>
@@ -31,7 +31,12 @@
 
 		.pencil, .pickr 				{margin-top:12px}
 		.pickr button 					{width:35px!important; height:35px!important; box-sizing:border-box; border:solid 2px #ffffff!important; border-radius:5px!important; outline:solid 1px #000000}
+<<<<<<< Updated upstream
 		
+=======
+
+		.show							{display:block}
+>>>>>>> Stashed changes
 	</style>
 </head>
 <body>
@@ -46,6 +51,7 @@
 				<button type="button" class="brush"  onclick="toolSetting(this.className, null, colorSetting())"><i class="fas fa-paint-brush"></i></button>
 				<button type="button" class="eraser" onclick="toolSetting(this.className, null, '#ffffff')"><i class="fas fa-eraser"></i></button>
 				<!--<button type="button" class="figure" onclick="toolSetting(this.className, null, null)"><i class="far fa-clone"></i></button>-->
+<<<<<<< Updated upstream
 				<button type="button" class="sizeBtn"><i class="fas fa-circle"></i></button>
 				<div class="size-modal">
 					<div class="size-modal-content">
@@ -54,6 +60,13 @@
 						</div>
 						<input type="range" class="slider" min="1" max="100" value="1">
 					</div>
+=======
+				<button type="button" class="sizeBtn modal"><i class="fas fa-circle modal"></i></button>
+				<div class="sizeSelect modal">
+					<label>크기</label>
+					<input type="text" class="sizeText" maxlength="3" value="1"><p>px</p>
+					<input type="range" class="slider" min="1" max="100" value="1">
+>>>>>>> Stashed changes
 				</div>
 				<div class="colorPicker"></div>
 				<!--<button type="button" class="clear"><i class="fas fa-broom"></i></button>-->
@@ -134,6 +147,7 @@
 
 		/* === tool size 조절 === */
 		sizeBtn.onclick = function() {
+<<<<<<< Updated upstream
 		  modal.style.display = "block";
 		};
 
@@ -141,7 +155,30 @@
 			if (event.target == modal) {
 				modal.style.display = "none";
 			};
+=======
+			/*if(sizeSelect.style.display === "block")
+				sizeSelect.style.display = "none";
+			else
+				sizeSelect.style.display = "block";*/
+			//if(sizeSelect.classList("show"))
+			if(!sizeSelect.classList.contains("show"))
+				sizeSelect.classList.add("show");
+			else
+				sizeSelect.classList.remove("show");
+>>>>>>> Stashed changes
 		};
+
+		window.onclick = function(event) {
+			let el = event.target;
+			console.log(el);
+			console.log(el.parentElement);
+			console.log("===========================")
+			if(el.classList.contains("size-modal") || )
+			//console.log(el.childNodes == event.target)
+			//console.log(sizeSelect == event.target)
+			//console.log(sizeSelect)
+
+		}
 
 		slider.oninput = function() {
 			sizeText.value = this.value;
